@@ -13,7 +13,6 @@ app.use(express.json());
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.0vnziom.mongodb.net/?retryWrites=true&w=majority`;
-console.log(uri)
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -23,23 +22,28 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+async function run(){
+try{
+const appointmentOptionCollection = client.db('doctorsPortal').collection('appointmentOptions');
 
-async function run() {
-  try {
-   
-    
-
-  } finally {
-   
-  }
-}
-run().catch(console.dir);
-
-
-app.get('/', async(req, res)=>{
-    res.send('data send')
+app.get('/appointment', async(req, res)=>{
+  const query = {};
+  const result = await appointmentOptionCollection.find(query).toArray();
+  res.send(result)
 })
 
-app.listen(port, ()=>{
-    console.log('data send successfully')
+} finally {
+ 
+}
+}
+
+run().catch(console.log)
+
+
+app.get('/', async (req, res) => {
+  res.send('data send')
+})
+
+app.listen(port, () => {
+  console.log('data send successfully')
 })
