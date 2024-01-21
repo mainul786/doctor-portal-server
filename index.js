@@ -28,9 +28,20 @@ const appointmentOptionCollection = client.db('doctorsPortal').collection('appoi
 const bookingsCollection = client.db('doctorsPortal').collection('bookings');
 
 app.get('/appointmentOptions', async(req, res)=>{
+  const date = req.query.date;
   const query = {};
-  const result = await appointmentOptionCollection.find(query).toArray();
-  res.send(result)
+  const options = await appointmentOptionCollection.find(query).toArray();
+  const bookingQuery = {appontmentDate: date}
+  const allBooked = await bookingsCollection.find(bookingQuery).toArray();
+  options.forEach(option =>{
+    const optionBooked = allBooked.filter(book => book.tretment === option.name);
+    const bookedSlot = optionBooked.map(book => book.slot);
+    const remaningSlots = option.slots.filter(slot => !bookedSlot.includes(slot));
+    console.log(date, option.name, remaningSlots.length)
+    option.slots = remaningSlots;
+    
+  })
+  res.send(options)
 })
 
 app.post('/bookings', async(req, res)=>{
