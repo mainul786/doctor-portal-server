@@ -44,6 +44,13 @@ app.get('/appointmentOptions', async(req, res)=>{
   res.send(options)
 })
 
+app.get('/bookings', async(req, res)=>{
+  const email = req.query.email;
+  const query = {email: email};
+  const booking = await bookingsCollection.find(query).toArray();
+  res.send(booking);
+})
+
 app.post('/bookings', async(req, res)=>{
   const bookings = req.body;
   const result = await bookingsCollection.insertOne(bookings);
