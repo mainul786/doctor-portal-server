@@ -4,6 +4,8 @@ const cors = require('cors');
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion } = require('mongodb');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
+
 
 // middleware
 app.use(cors());
@@ -22,6 +24,24 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
+function verifyJWT(req, res, next){
+  const authHeader = req.headers.authorization;
+  if(!authHeader){
+    return res.send(401).send('unAuthorization access')
+  }
+
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN, function(err, decoded){
+    if(err){
+      return res.status(403).send({message: 'Forbiden Access'})
+    }
+    req.decoded = decoded;
+    next();
+  })
+
+}
+
 async function run(){
 try{
 const appointmentOptionCollection = client.db('doctorsPortal').collection('appointmentOptions');
@@ -38,15 +58,18 @@ app.get('/appointmentOptions', async(req, res)=>{
     const optionBooked = allBooked.filter(book => book.tretment === option.name);
     const bookedSlot = optionBooked.map(book => book.slot);
     const remaningSlots = option.slots.filter(slot => !bookedSlot.includes(slot));
-    console.log(date, option.name, remaningSlots.length)
     option.slots = remaningSlots;
     
   })
   res.send(options)
 })
 
-app.get('/bookings', async(req, res)=>{
+app.get('/bookings', verifyJWT, async(req, res)=>{
   const email = req.query.email;
+  const decodedEmail = req.decoded.email;
+  if(email !== decodedEmail){
+    return res.status(403).send({message:'forbidden access'})
+  }
   const query = {email: email};
   const booking = await bookingsCollection.find(query).toArray();
   res.send(booking);
@@ -56,6 +79,17 @@ app.post('/bookings', async(req, res)=>{
   const bookings = req.body;
   const result = await bookingsCollection.insertOne(bookings);
   res.send(result);
+})
+
+app.get('/jwt', async(req, res)=>{
+  const email = req.query.email;
+  const query = {email: email};
+  const user = await usersCollection.findOne(query);
+  if(user){
+    const token = jwt.sign({email},process.env.ACCESS_TOKEN, {expiresIn: '1h'});
+    return res.send({accessToken:token});
+  }
+  res.status(401).send({accessToken: ''})
 })
 
 app.post('/users', async(req, res)=>{
