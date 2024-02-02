@@ -49,6 +49,19 @@ async function run() {
     const usersCollection = client.db('doctorsPortal').collection('users');
     const doctorsCollection = client.db('doctorsPortal').collection('doctor');
 
+    //Note:--  make sure you use verifyAdmin after verifyJWT
+    const verifyAdmin = async (req, res, next)=>{
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await usersCollection.findOne(query)
+      if (user?.role !== 'admin') {
+        return res.status(403).send({ message: 'Forbiden Access' })
+      }
+      next()
+    }
+
+
+
     app.get('/appointmentOptions', async (req, res) => {
       const date = req.query.date;
       const query = {};
@@ -65,9 +78,9 @@ async function run() {
       res.send(options)
     })
 
-    app.get('/appointmentSpecility', async(req, res) =>{
+    app.get('/appointmentSpecility', async (req, res) => {
       const query = {};
-      const result = await appointmentOptionCollection.find(query).project({name: 1}).toArray();
+      const result = await appointmentOptionCollection.find(query).project({ name: 1 }).toArray();
       res.send(result);
     })
 
@@ -109,7 +122,7 @@ async function run() {
       res.status(401).send({ accessToken: '' })
     })
 
-    app.get('/users/admin/:email', async(req, res) => {
+    app.get('/users/admin/:email', async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const user = await usersCollection.findOne(query);
@@ -128,13 +141,8 @@ async function run() {
       res.send(result);
     })
 
-    app.put('/users/admin/:id', verifyJWT, async (req, res) => {
-      const decodedEmail = req.decoded.email;
-      const query = { email: decodedEmail };
-      const user = await usersCollection.findOne(query)
-      if (user?.role !== 'admin') {
-        return res.status(403).send({ message: 'Forbiden Access' })
-      }
+    app.put('/users/admin/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
@@ -147,31 +155,31 @@ async function run() {
       res.send(result);
     })
 
-    app.post('/doctors', async(req, res)=>{
+    app.post('/doctors', verifyJWT,verifyAdmin, async (req, res) => {
       const doctor = req.body;
       const result = await doctorsCollection.insertOne(doctor);
       res.send({
-        message:'doctor inserted seccefully',
-        status:'success',
+        message: 'doctor inserted seccefully',
+        status: 'success',
         data: result
       })
     })
 
-    app.get('/doctors', async(req, res)=>{
+    app.get('/doctors', verifyJWT, verifyAdmin, async (req, res) => {
       const doctors = {};
       const result = await doctorsCollection.find(doctors).toArray();
       res.send(result);
     })
-app.delete('/doctors/:id', async(req, res)=>{
-  const id = req.params.id;
-  const query = { _id: new ObjectId(id)};
-  const result = await doctorsCollection.deleteOne(query);
-  res.send({
-    message:'Deleted succefully',
-    status:'success',
-    data:result
-  })
-})
+    app.delete('/doctors/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await doctorsCollection.deleteOne(query);
+      res.send({
+        message: 'Deleted succefully',
+        status: 'success',
+        data: result
+      })
+    })
 
   } finally {
 
