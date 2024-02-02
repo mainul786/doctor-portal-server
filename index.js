@@ -155,6 +155,20 @@ async function run() {
       res.send(result);
     })
 
+// Temporary for data update all collection data
+// app.put('/addPrice', async (req, res)=>{
+//   const filter = {};
+//   const options = {upsert: true};
+//   const updateDoc = {
+//     $set: {
+//       price: 99
+//     }
+//   }
+//   const result = await appointmentOptionCollection.updateMany(filter, updateDoc, options);
+//   console.log(result);
+//   res.send(result)
+// })
+
     app.post('/doctors', verifyJWT,verifyAdmin, async (req, res) => {
       const doctor = req.body;
       const result = await doctorsCollection.insertOne(doctor);
