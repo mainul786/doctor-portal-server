@@ -123,13 +123,13 @@ async function run() {
       const booking = req.body;
       const price = booking.price;
       const amount = price * 100;
-      
+
       const paymentIntent = await stripe.paymentIntents.create({
         currency:'inr',
         amount:amount,
-        "payment_method_type":[
-          "card"
-        ]
+        // "payment_method_type": [
+        //   "card"
+        // ]
       });
       res.send({
         clientSecret: paymentIntent.client_secret
