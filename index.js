@@ -127,14 +127,12 @@ async function run() {
       const amount = parseInt(price * 100);
 
       const paymentIntent = await stripe.paymentIntents.create({
-        currency:'inr',
+        currency:'usd',
         amount:amount,
-        // "payment_method_type": [
-        //   "card"
-        // ]
-        automatic_payment_methods: {
-          enabled: true,
-        },
+        "payment_method_types": ["card" ],
+        // automatic_payment_methods: {
+        //   enabled: true,
+        // },
       });
       res.send({
         clientSecret: paymentIntent.client_secret,
